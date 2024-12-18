@@ -19,39 +19,45 @@ hour_df = pd.read_csv(hour_path)
 day_df['dteday'] = pd.to_datetime(day_df['dteday'])
 hour_df['dteday'] = pd.to_datetime(hour_df['dteday'])
 
+hour_df['weekday'] = hour_df['dteday'].dt.dayofweek  
+
 st.title("Dashboard Bike Sharing")
 
 st.header("Visualisasi")
 
-st.subheader("Pengaruh Cuaca terhadap Jumlah Penyewaan")
-fig, ax = plt.subplots(figsize=(12, 6))  
-sns.barplot(x='weathersit', y='cnt', data=day_df, ax=ax, palette="Blues_d")  
-ax.set_title('Pengaruh Kondisi Cuaca terhadap Jumlah Penyewaan Sepeda', fontsize=16)  
-ax.set_xlabel('Kondisi Cuaca', fontsize=12)  
-ax.set_ylabel('Jumlah Penyewaan Sepeda', fontsize=12)  
-ax.set_xticklabels(['Cerah', 'Berawan', 'Ringan Hujan/Salju', 'Hujan Lebat/Salju'])  
+temp_range = st.slider("Pilih Rentang Temperatur", min_value=0.0, max_value=1.0, value=(0.0, 1.0))
+filtered_day_df = day_df[(day_df['temp'] >= temp_range[0]) & (day_df['temp'] <= temp_range[1])]
+
+fig, ax = plt.subplots(figsize=(12, 6))
+sns.barplot(x='weathersit', y='cnt', data=filtered_day_df, ax=ax, palette="Blues_d")
+ax.set_title('Pengaruh Kondisi Cuaca terhadap Jumlah Penyewaan Sepeda', fontsize=16)
+ax.set_xlabel('Kondisi Cuaca', fontsize=12)
+ax.set_ylabel('Jumlah Penyewaan Sepeda', fontsize=12)
+ax.set_xticklabels(['Cerah', 'Berawan', 'Ringan Hujan/Salju', 'Hujan Lebat/Salju'])
 st.pyplot(fig)
 
-plt.figure(figsize=(12, 6))
-sns.scatterplot(x='temp', y='cnt', data=day_df, hue='hum', size='windspeed', palette="viridis", sizes=(20, 200))
-plt.title('Pengaruh Temperatur dan Kelembapan terhadap Jumlah Penyewaan Sepeda', fontsize=16)
-plt.xlabel('Temperatur (Ternormalisasi)', fontsize=12)
-plt.ylabel('Jumlah Penyewaan Sepeda', fontsize=12)
-st.pyplot(plt)
-
-st.subheader("Pola Penyewaan Berdasarkan Hari dan Jam")
-
-fig, ax = plt.subplots(figsize=(12, 6)) 
-sns.barplot(x='weekday', y='cnt', data=day_df, ax=ax, palette="Spectral")  
-ax.set_title('Pola Penyewaan Sepeda Berdasarkan Hari dalam Seminggu', fontsize=16) 
-ax.set_xlabel('Hari dalam Seminggu', fontsize=12)  
-ax.set_ylabel('Jumlah Penyewaan Sepeda', fontsize=12) 
-ax.set_xticklabels(['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'])  
+fig, ax = plt.subplots(figsize=(12, 6))
+sns.barplot(x='weekday', y='cnt', data=day_df, ax=ax, palette="Spectral")
+ax.set_title('Pola Penyewaan Sepeda Berdasarkan Hari dalam Seminggu', fontsize=16)
+ax.set_xlabel('Hari dalam Seminggu', fontsize=12)
+ax.set_ylabel('Jumlah Penyewaan Sepeda', fontsize=12)
+ax.set_xticklabels(['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'])
 st.pyplot(fig)
 
-fig, ax = plt.subplots(figsize=(12, 6)) 
-sns.lineplot(x='hr', y='cnt', data=hour_df, ax=ax, color="orange")
-ax.set_title('Pola Penyewaan Sepeda Berdasarkan Jam dalam Sehari', fontsize=16)  
-ax.set_xlabel('Jam dalam Sehari', fontsize=12) 
-ax.set_ylabel('Jumlah Penyewaan Sepeda', fontsize=12)  
-st.pyplot(fig)
+day_options = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+selected_day = st.selectbox("Pilih Hari", options=day_options)
+
+day_mapping = {'Minggu': 6, 'Senin': 0, 'Selasa': 1, 'Rabu': 2, 'Kamis': 3, 'Jumat': 4, 'Sabtu': 5}
+selected_day_number = day_mapping[selected_day]
+
+filtered_hour_df_by_day = hour_df[hour_df['weekday'] == selected_day_number]
+
+if not filtered_hour_df_by_day.empty:
+    average_hourly_rentals = filtered_hour_df_by_day.groupby('hr')['cnt'].mean().reset_index()
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.barplot(x='hr', y='cnt', data=average_hourly_rentals, ax=ax, palette="Oranges_d")
+    ax.set_title(f'Rata-rata Penyewaan Sepeda Berdasarkan Jam dalam Sehari ({selected_day})', fontsize=16)
+    ax.set_xlabel('Jam dalam Sehari', fontsize=12)
+    ax.set_ylabel('Rata-rata Jumlah Penyewaan Sepeda', fontsize=12)
+    st.pyplot(fig)
