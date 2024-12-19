@@ -3,15 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import gdown
 
-day_url = 'https://drive.google.com/uc?id=1vayydX55Pmc7p04MMDPsMfWdM9V_tJPF'
-hour_url = 'https://drive.google.com/uc?id=1OkeX93izAoOUHiLBBgcFNiEae0VYzjO0'
+
 day_path = 'day.csv'  
 hour_path = 'hour.csv' 
-
-gdown.download(day_url, day_path, quiet=False)
-gdown.download(hour_url, hour_path, quiet=False)
 
 day_df = pd.read_csv(day_path)
 hour_df = pd.read_csv(hour_path)
